@@ -222,7 +222,7 @@ func generateQRCode(id string) ([]byte, error) {
 		 - エラー訂正レベルM (15%)
 	*/
 	// use go-qrcode
-	qrCode, err := qrcode.NewWithForcedVersion(encryptedID, 5, qrcode.Medium)
+	qrCode, err := qrcode.NewWithForcedVersion(encryptedID, 6, qrcode.Medium)
 	if err != nil {
 		return nil, err
 	}
