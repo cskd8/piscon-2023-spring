@@ -9,7 +9,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"image/color"
 	"io"
 	"log"
 	"net/http"
@@ -22,6 +21,7 @@ import (
 
 	_ "net/http/pprof"
 
+	"github.com/disintegration/imaging"
 	"github.com/felixge/fgprof"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -223,9 +223,19 @@ func generateQRCode(id string) ([]byte, error) {
 		 - エラー訂正レベルM (15%)
 	*/
 	// use go-qrcode
-	qrFileLock.Lock()
-	defer qrFileLock.Unlock()
-	err = qrcode.WriteColorFile(encryptedID, qrcode.Medium, -1, color.Black, color.White, qrCodeFileName)
+	qrCode, err := qrcode.New(encryptedID, qrcode.Medium)
+	if err != nil {
+		return nil, err
+	}
+	qrCode.DisableBorder = true
+	qrCode.WriteFile(37, qrCodeFileName)
+	// resize with margin 8px
+	img, err := imaging.Open(qrCodeFileName)
+	if err != nil {
+		return nil, err
+	}
+	img = imaging.Resize(img, 45, 45, imaging.Lanczos)
+	err = imaging.Save(img, qrCodeFileName)
 	if err != nil {
 		return nil, err
 	}
