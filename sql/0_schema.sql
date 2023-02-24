@@ -1,13 +1,13 @@
 DROP TABLE IF EXISTS `book`;
 
 CREATE TABLE `book` (
-  `id` varchar(255) NOT NULL,
   `id_int` int NOT NULL AUTO_INCREMENT,
+  `id` varchar(255) NOT NULL,
   `title` varchar(255) NOT NULL,
   `author` varchar(255) NOT NULL,
   `genre` int NOT NULL,
   `created_at` datetime(6) NOT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id_int`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 -- Add multi index to genre, title, author with id
 ALTER TABLE `book` ADD INDEX `idx_genre_title_author` (`genre`, `title`, `author`, `id`);
