@@ -24,11 +24,14 @@ import (
 	"github.com/felixge/fgprof"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/oklog/ulid/v2"
 	"github.com/skip2/go-qrcode"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 func main() {
 	http.DefaultServeMux.Handle("/debug/fgprof", fgprof.Handler())
@@ -800,7 +803,11 @@ func getBooksHandler(c echo.Context) error {
 
 	_ = tx.Commit()
 
-	return c.JSON(http.StatusOK, res)
+	resStr, err := json.MarshalToString(res)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	return c.String(http.StatusOK, resStr)
 }
 
 type GetBookResponse struct {
@@ -859,7 +866,11 @@ func getBookHandler(c echo.Context) error {
 
 	_ = tx.Commit()
 
-	return c.JSON(http.StatusOK, res)
+	resStr, err := json.MarshalToString(res)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	return c.String(http.StatusOK, resStr)
 }
 
 // 蔵書のQRコードを取得
@@ -1051,7 +1062,11 @@ func getLendingsHandler(c echo.Context) error {
 	}
 
 	if len(memberIds) == 0 {
-		return c.JSON(http.StatusOK, res)
+		resStr, err := json.MarshalToString(res)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+		return c.String(http.StatusOK, resStr)
 	}
 	query, args, err = sqlx.In("SELECT * FROM `member` WHERE `id` IN (?)", memberIds)
 	if err != nil {
@@ -1068,7 +1083,11 @@ func getLendingsHandler(c echo.Context) error {
 	}
 
 	if len(bookIds) == 0 {
-		return c.JSON(http.StatusOK, res)
+		resStr, err := json.MarshalToString(res)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+		return c.String(http.StatusOK, resStr)
 	}
 	query, args, err = sqlx.In("SELECT * FROM `book` WHERE `id` IN (?)", bookIds)
 	if err != nil {
@@ -1092,7 +1111,11 @@ func getLendingsHandler(c echo.Context) error {
 
 	_ = tx.Commit()
 
-	return c.JSON(http.StatusOK, res)
+	resStr, err := json.MarshalToString(res)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	return c.String(http.StatusOK, resStr)
 }
 
 type ReturnLendingsRequest struct {
