@@ -18,13 +18,14 @@ import (
 	"sync"
 	"time"
 
+	_ "net/http/pprof"
+
+	"github.com/felixge/fgprof"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/oklog/ulid/v2"
-	_ "net/http/pprof"
-	"github.com/felixge/fgprof"
 )
 
 func main() {
@@ -704,17 +705,47 @@ func getBooksHandler(c echo.Context) error {
 		Books: make([]GetBookResponse, len(books)),
 		Total: total,
 	}
+
+	// for i, book := range books {
+	// 	res.Books[i].Book = book
+
+	// 	err = tx.GetContext(c.Request().Context(), &Lending{}, "SELECT * FROM `lending` WHERE `book_id` = ?", book.ID)
+	// 	if err == nil {
+	// 		res.Books[i].Lending = true
+	// 	} else if errors.Is(err, sql.ErrNoRows) {
+	// 		res.Books[i].Lending = false
+	// 	} else {
+	// 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	// 	}
+	// }
+	// fix n+1
+	bookIDs := make([]string, len(books))
 	for i, book := range books {
 		res.Books[i].Book = book
-
-		err = tx.GetContext(c.Request().Context(), &Lending{}, "SELECT * FROM `lending` WHERE `book_id` = ?", book.ID)
-		if err == nil {
-			res.Books[i].Lending = true
-		} else if errors.Is(err, sql.ErrNoRows) {
-			res.Books[i].Lending = false
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		bookIDs[i] = book.ID
+	}
+	lendings := make(map[string]string)
+	// use sqlx.In()
+	query, args, err = sqlx.In("SELECT `book_id` FROM `lending` WHERE `book_id` IN (?)", bookIDs)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	err = tx.SelectContext(c.Request().Context(), &lendings, query, args...)
+	if err == nil {
+		for _, book := range res.Books {
+			_, ok := lendings[book.ID]
+			if ok {
+				book.Lending = true
+			} else {
+				book.Lending = false
+			}
 		}
+	} else if errors.Is(err, sql.ErrNoRows) {
+		for _, book := range res.Books {
+			book.Lending = false
+		}
+	} else {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	_ = tx.Commit()

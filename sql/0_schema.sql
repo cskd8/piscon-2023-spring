@@ -27,6 +27,8 @@ CREATE TABLE `lending` (
   `created_at` datetime(6) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+-- Add index to book_id
+ALTER TABLE `lending` ADD INDEX `book_id` (`book_id`);
 
 DROP TABLE IF EXISTS `member`;
 
