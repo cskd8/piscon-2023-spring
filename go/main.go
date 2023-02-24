@@ -730,7 +730,6 @@ func getBooksHandler(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-	query = tx.Rebind(query)
 	err = tx.SelectContext(c.Request().Context(), &lendings, query, args...)
 	if err == nil {
 		for _, book := range res.Books {
