@@ -987,15 +987,13 @@ func postLendingsHandler(c echo.Context) error {
 		}
 	}
 	// bulk insert using ids, bookIDs, memberIDs, dues, lendingTimes
-	// use sqlx.In to build the query
-	query, _, err := sqlx.In(
-		"INSERT INTO `lending` (`id`, `book_id`, `member_id`, `due`, `lending_time`) VALUES (?, ?, ?, ?, ?)",
-		ids, bookIDs, memberIDs, dues, lendingTimes)
+	// use db.NamedExecContext
+	query, args, err := sqlx.Named("INSERT INTO `lending` (`id`, `book_id`, `member_id`, `due`, `lending_time`) VALUES (:id, :book_id, :member_id, :due, :lending_time)", values)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-	// use sqlx.NamedExecContext to build the query
-	_, err = tx.NamedExecContext(c.Request().Context(), query, values)
+	// use db.NamedExecContext
+	_, err = tx.NamedExecContext(c.Request().Context(), query, args)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
