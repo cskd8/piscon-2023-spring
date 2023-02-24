@@ -706,46 +706,17 @@ func getBooksHandler(c echo.Context) error {
 		Total: total,
 	}
 
-	// for i, book := range books {
-	// 	res.Books[i].Book = book
-
-	// 	err = tx.GetContext(c.Request().Context(), &Lending{}, "SELECT * FROM `lending` WHERE `book_id` = ?", book.ID)
-	// 	if err == nil {
-	// 		res.Books[i].Lending = true
-	// 	} else if errors.Is(err, sql.ErrNoRows) {
-	// 		res.Books[i].Lending = false
-	// 	} else {
-	// 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	// 	}
-	// }
-	// fix n+1
-	bookIDs := make([]string, len(books))
 	for i, book := range books {
 		res.Books[i].Book = book
-		bookIDs[i] = book.ID
-	}
-	lendings := make(map[string]string)
-	// use sqlx.In()
-	query, args, err = sqlx.In("SELECT `book_id` FROM `lending` WHERE `book_id` IN (?)", bookIDs)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	err = tx.SelectContext(c.Request().Context(), &lendings, query, args...)
-	if err == nil {
-		for _, book := range res.Books {
-			_, ok := lendings[book.ID]
-			if ok {
-				book.Lending = true
-			} else {
-				book.Lending = false
-			}
+
+		err = tx.GetContext(c.Request().Context(), &Lending{}, "SELECT * FROM `lending` WHERE `book_id` = ?", book.ID)
+		if err == nil {
+			res.Books[i].Lending = true
+		} else if errors.Is(err, sql.ErrNoRows) {
+			res.Books[i].Lending = false
+		} else {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
-	} else if errors.Is(err, sql.ErrNoRows) {
-		for _, book := range res.Books {
-			book.Lending = false
-		}
-	} else {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	_ = tx.Commit()
@@ -797,7 +768,10 @@ func getBookHandler(c echo.Context) error {
 	res := GetBookResponse{
 		Book: book,
 	}
-	err = tx.GetContext(c.Request().Context(), &Lending{}, "SELECT * FROM `lending` WHERE `book_id` = ?", id)
+
+	// only id field is needed
+	var lendIds []Lending
+	err = tx.GetContext(c.Request().Context(), &lendIds, "SELECT `id` FROM `lending` WHERE `book_id` = ?", id)
 	if err == nil {
 		res.Lending = true
 	} else if errors.Is(err, sql.ErrNoRows) {
