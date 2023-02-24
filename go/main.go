@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"image/color"
 	"io"
 	"log"
 	"net/http"
@@ -27,6 +28,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/oklog/ulid/v2"
+	"github.com/skip2/go-qrcode"
 )
 
 func main() {
@@ -220,12 +222,18 @@ func generateQRCode(id string) ([]byte, error) {
 		 - バージョン5 (37x37ピクセル、マージン含め45x45ピクセル)
 		 - エラー訂正レベルM (15%)
 	*/
-	_, err = exec.
-		Command("qrencode", "-o", qrCodeFileName, "-t", "PNG", "-s", "1", "-v", "5", "--strict-version", "-l", "M", encryptedID).
-		Output()
+
+	// use go-qrcode
+	qrCode, err := qrcode.New(encryptedID, qrcode.Medium)
 	if err != nil {
 		return nil, err
 	}
+
+	qrCode.DisableBorder = false
+	qrCode.BackgroundColor = color.White
+	qrCode.ForegroundColor = color.Black
+	qrCode.VersionNumber = 5
+	qrCode.WriteFile(45, qrCodeFileName)
 
 	file, err := os.Open(qrCodeFileName)
 	if err != nil {
@@ -838,8 +846,8 @@ func getBookHandler(c echo.Context) error {
 	res := GetBookResponse{
 		Book: book,
 	}
-	// select only one field
 
+	// select only one field
 	err = tx.GetContext(c.Request().Context(), &Lending{}, "SELECT `book_id` FROM `lending` WHERE `book_id` = ?", id)
 	if err == nil {
 		res.Lending = true
