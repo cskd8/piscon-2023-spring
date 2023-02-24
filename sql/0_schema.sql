@@ -2,6 +2,7 @@ DROP TABLE IF EXISTS `book`;
 
 CREATE TABLE `book` (
   `id` varchar(255) NOT NULL,
+  `id_int` int NOT NULL AUTO_INCREMENT,
   `title` varchar(255) NOT NULL,
   `author` varchar(255) NOT NULL,
   `genre` int NOT NULL,
@@ -16,6 +17,10 @@ ALTER TABLE `book` ADD INDEX `idx_genre_id` (`genre`, `id`);
 ALTER TABLE `book` ADD INDEX `idx_title_id` (`title`, `id`);
 -- Add index to author with id
 ALTER TABLE `book` ADD INDEX `idx_author_id` (`author`, `id`);
+-- Add index to id_int
+ALTER TABLE `book` ADD INDEX `idx_id_int` (`id_int`);
+-- Add multi index to genre, title, author with id_int
+ALTER TABLE `book` ADD INDEX `idx_genre_title_author` (`genre`, `title`, `author`, `id_int`);
 
 DROP TABLE IF EXISTS `key`;
 
