@@ -838,7 +838,9 @@ func getBookHandler(c echo.Context) error {
 	res := GetBookResponse{
 		Book: book,
 	}
-	err = tx.GetContext(c.Request().Context(), &Lending{}, "SELECT * FROM `lending` WHERE `book_id` = ?", id)
+	// select only one field
+
+	err = tx.GetContext(c.Request().Context(), &Lending{}, "SELECT `book_id` FROM `lending` WHERE `book_id` = ?", id)
 	if err == nil {
 		res.Lending = true
 	} else if errors.Is(err, sql.ErrNoRows) {
