@@ -25,7 +25,7 @@ SLOW_LOG=/tmp/slow-query.log
 
 SLACKCAT_CNL=isucon
 
-PPROF_TIME=120
+PPROF_TIME=60
 
 LOGS_DIR=/etc/logs
 
