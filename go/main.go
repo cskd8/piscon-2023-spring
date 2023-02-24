@@ -1015,66 +1015,66 @@ func getLendingsHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	// res := make([]GetLendingsResponse, len(lendings))
-	// for i, lending := range lendings {
-	// 	res[i].Lending = lending
-
-	// 	var member Member
-	// 	err = tx.GetContext(c.Request().Context(), &member, "SELECT * FROM `member` WHERE `id` = ?", lending.MemberID)
-	// 	if err != nil {
-	// 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	// 	}
-	// 	res[i].MemberName = member.Name
-
-	// 	var book Book
-	// 	err = tx.GetContext(c.Request().Context(), &book, "SELECT * FROM `book` WHERE `id` = ?", lending.BookID)
-	// 	if err != nil {
-	// 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	// 	}
-	// 	res[i].BookTitle = book.Title
-	// }
-	// fix N+1
-	// use sqlx.In
-	bookIDs := make([]string, len(lendings))
-	memberIDs := make([]string, len(lendings))
-	for i, lending := range lendings {
-		bookIDs[i] = lending.BookID
-		memberIDs[i] = lending.MemberID
-	}
-	query, args, err = sqlx.In("SELECT * FROM `book` WHERE `id` IN (?)", bookIDs)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	var books []Book
-	err = tx.SelectContext(c.Request().Context(), &books, query, args...)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	bookMap := make(map[string]Book)
-	for _, book := range books {
-		bookMap[book.ID] = book
-	}
-
-	query, args, err = sqlx.In("SELECT * FROM `member` WHERE `id` IN (?)", memberIDs)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	var members []Member
-	err = tx.SelectContext(c.Request().Context(), &members, query, args...)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	memberMap := make(map[string]Member)
-	for _, member := range members {
-		memberMap[member.ID] = member
-	}
-
 	res := make([]GetLendingsResponse, len(lendings))
 	for i, lending := range lendings {
 		res[i].Lending = lending
-		res[i].MemberName = memberMap[lending.MemberID].Name
-		res[i].BookTitle = bookMap[lending.BookID].Title
+
+		var member Member
+		err = tx.GetContext(c.Request().Context(), &member, "SELECT * FROM `member` WHERE `id` = ?", lending.MemberID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+		res[i].MemberName = member.Name
+
+		var book Book
+		err = tx.GetContext(c.Request().Context(), &book, "SELECT * FROM `book` WHERE `id` = ?", lending.BookID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+		res[i].BookTitle = book.Title
 	}
+	// // fix N+1
+	// // use sqlx.In
+	// bookIDs := make([]string, len(lendings))
+	// memberIDs := make([]string, len(lendings))
+	// for i, lending := range lendings {
+	// 	bookIDs[i] = lending.BookID
+	// 	memberIDs[i] = lending.MemberID
+	// }
+	// query, args, err = sqlx.In("SELECT * FROM `book` WHERE `id` IN (?)", bookIDs)
+	// if err != nil {
+	// 	return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	// }
+	// var books []Book
+	// err = tx.SelectContext(c.Request().Context(), &books, query, args...)
+	// if err != nil {
+	// 	return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	// }
+	// bookMap := make(map[string]Book)
+	// for _, book := range books {
+	// 	bookMap[book.ID] = book
+	// }
+
+	// query, args, err = sqlx.In("SELECT * FROM `member` WHERE `id` IN (?)", memberIDs)
+	// if err != nil {
+	// 	return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	// }
+	// var members []Member
+	// err = tx.SelectContext(c.Request().Context(), &members, query, args...)
+	// if err != nil {
+	// 	return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	// }
+	// memberMap := make(map[string]Member)
+	// for _, member := range members {
+	// 	memberMap[member.ID] = member
+	// }
+
+	// res := make([]GetLendingsResponse, len(lendings))
+	// for i, lending := range lendings {
+	// 	res[i].Lending = lending
+	// 	res[i].MemberName = memberMap[lending.MemberID].Name
+	// 	res[i].BookTitle = bookMap[lending.BookID].Title
+	// }
 
 	_ = tx.Commit()
 
