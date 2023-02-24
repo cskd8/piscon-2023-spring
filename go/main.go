@@ -730,7 +730,7 @@ func getBooksHandler(c echo.Context) error {
 	}
 
 	query = strings.ReplaceAll(query, "COUNT(*)", "*")
-	query += "WHERE ID > ? ORDER BY ID ASC LIMIT ? OFFSET ?"
+	query += "LIMIT ? OFFSET ?"
 	args = append(args, lastBookID, bookPageLimit, (page-1)*bookPageLimit)
 
 	var books []Book
