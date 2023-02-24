@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -206,26 +205,10 @@ func decrypt(cipherText string) (string, error) {
 	return string(decryptedText), nil
 }
 
-const qrCodeDir = "../images"
+const qrCodeFileName = "../images/qr.png"
 
-// QRコードを生成・保存
+// QRコードを生成
 func generateQRCode(id string) ([]byte, error) {
-	if _, err := os.Stat(qrCodeDir); os.IsNotExist(err) {
-		err := os.Mkdir(qrCodeDir, 0777)
-		if err != nil {
-			return nil, err
-		}
-	}
-	// if qrCodeDir+id+".png" exists, return it
-	qrCodeFileName := qrCodeDir + "/" + id + ".png"
-	if _, err := os.Stat(qrCodeFileName); err == nil {
-		file, err := os.Open(qrCodeFileName)
-		if err != nil {
-			return nil, err
-		}
-		defer file.Close()
-		return ioutil.ReadAll(file)
-	}
 	encryptedID, err := encrypt(id)
 	if err != nil {
 		return nil, err
