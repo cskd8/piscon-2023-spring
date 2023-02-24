@@ -27,6 +27,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/oklog/ulid/v2"
+	"github.com/skip2/go-qrcode"
 )
 
 func main() {
@@ -220,12 +221,14 @@ func generateQRCode(id string) ([]byte, error) {
 		 - バージョン5 (37x37ピクセル、マージン含め45x45ピクセル)
 		 - エラー訂正レベルM (15%)
 	*/
-	_, err = exec.
-		Command("qrencode", "-o", qrCodeFileName, "-t", "PNG", "-s", "1", "-v", "5", "--strict-version", "-l", "M", encryptedID).
-		Output()
+
+	// use go-qrcode
+	qrCode, err := qrcode.New(encryptedID, qrcode.Medium)
 	if err != nil {
 		return nil, err
 	}
+	qrCode.DisableBorder = false
+	qrCode.WriteFile(45, qrCodeFileName)
 
 	file, err := os.Open(qrCodeFileName)
 	if err != nil {
