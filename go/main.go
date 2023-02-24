@@ -139,7 +139,6 @@ const (
 // 蔵書
 type Book struct {
 	ID        string    `json:"id" db:"id"`
-	IDInt     int       `json:"-" db:"id_int"`
 	Title     string    `json:"title" db:"title"`
 	Author    string    `json:"author" db:"author"`
 	Genre     Genre     `json:"genre" db:"genre"`
@@ -731,9 +730,8 @@ func getBooksHandler(c echo.Context) error {
 	}
 
 	query = strings.ReplaceAll(query, "COUNT(*)", "*")
-	// use BETWEEN instead of LIMIT OFFSET
-	query += " BETWEEN ? AND ? ORDER BY `id_int` ASC"
-	args = append(args, page*bookPageLimit, page*bookPageLimit+bookPageLimit-1)
+	query += "LIMIT ? OFFSET ?"
+	args = append(args, bookPageLimit, (page-1)*bookPageLimit)
 
 	var books []Book
 	err = tx.SelectContext(c.Request().Context(), &books, query, args...)
