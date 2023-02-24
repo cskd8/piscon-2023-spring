@@ -10,6 +10,12 @@ CREATE TABLE `book` (
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 -- Add multi index to genre, title, author with id
 ALTER TABLE `book` ADD INDEX `idx_genre_title_author` (`genre`, `title`, `author`, `id`);
+-- Add index to genre with id
+ALTER TABLE `book` ADD INDEX `idx_genre_id` (`genre`, `id`);
+-- Add index to title with id
+ALTER TABLE `book` ADD INDEX `idx_title_id` (`title`, `id`);
+-- Add index to author with id
+ALTER TABLE `book` ADD INDEX `idx_author_id` (`author`, `id`);
 
 DROP TABLE IF EXISTS `key`;
 
