@@ -403,6 +403,8 @@ func getMembersHandler(c echo.Context) error {
 		query += "ORDER BY `name` ASC "
 	case "name_desc":
 		query += " ORDER BY `name` DESC "
+	default:
+		query += "ORDER BY `id` ASC "
 	}
 	query += "LIMIT ? OFFSET ?"
 
@@ -730,7 +732,7 @@ func getBooksHandler(c echo.Context) error {
 	}
 
 	query = strings.ReplaceAll(query, "COUNT(*)", "*")
-	query += "LIMIT ? OFFSET ?"
+	query += "ORDER BY `id` ASC LIMIT ? OFFSET ?"
 	args = append(args, lastBookID, bookPageLimit, (page-1)*bookPageLimit)
 
 	var books []Book
@@ -1015,6 +1017,7 @@ func getLendingsHandler(c echo.Context) error {
 		query += " WHERE `due` > ?"
 		args = append(args, time.Now())
 	}
+	query += " ORDER BY `id` ASC"
 
 	var lendings []Lending
 	err = tx.SelectContext(c.Request().Context(), &lendings, query, args...)
