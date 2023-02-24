@@ -1000,7 +1000,7 @@ func postLendingsHandler(c echo.Context) error {
 
 	// Select
 	// use sqlx.In
-	query, args, err := sqlx.In("SELECT * FROM `lending` WHERE `id` IN (?)", ids)
+	query, args, err = sqlx.In("SELECT * FROM `lending` WHERE `id` IN (?)", ids)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
