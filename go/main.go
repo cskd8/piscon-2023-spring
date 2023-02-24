@@ -93,6 +93,12 @@ func main() {
 		}
 	}
 
+	// set cache
+	err = memberCacheInit()
+	if err != nil {
+		log.Panic(err)
+	}
+
 	e.Logger.Fatal(e.Start(":8080"))
 }
 
