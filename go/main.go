@@ -977,6 +977,9 @@ func postLendingsHandler(c echo.Context) error {
 
 	// Insert
 	// use sqlx.Named
+	if len(ids) == 0 {
+		return echo.NewHTTPError(http.StatusInternalServerError, "ids is empty")
+	}
 	query, args, err := sqlx.Named("INSERT INTO `lending` (`id`, `book_id`, `member_id`, `due`, `created_at`) VALUES (:id, :book_id, :member_id, :due, :created_at)", map[string]interface{}{
 		"id":         ids,
 		"book_id":    bookIDs,
