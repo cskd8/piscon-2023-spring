@@ -939,10 +939,6 @@ func postLendingsHandler(c echo.Context) error {
 	res := make([]PostLendingsResponse, len(req.BookIDs))
 
 	var ids []string
-	var bookIDs []string
-	var memberIDs []string
-	var dues []time.Time
-	var lendingTimes []time.Time
 	var books []Book
 	for _, bookID := range req.BookIDs {
 		// 蔵書の存在確認
