@@ -762,6 +762,7 @@ func getBooksHandler(c echo.Context) error {
 	}
 
 	var lendings []Lending
+	lendingMap := make(map[string]bool)
 	// use sql.In
 	query, args, err = sqlx.In("SELECT * FROM `lending` WHERE `book_id` IN (?)", bookIDs)
 	if err != nil {
@@ -770,10 +771,15 @@ func getBooksHandler(c echo.Context) error {
 	query = tx.Rebind(query)
 	err = tx.SelectContext(c.Request().Context(), &lendings, query, args...)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		if err == sql.ErrNoRows {
+			for i := range res.Books {
+				res.Books[i].Lending = false
+			}
+		} else {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
 	}
 
-	lendingMap := make(map[string]bool)
 	for _, lending := range lendings {
 		lendingMap[lending.BookID] = true
 	}
