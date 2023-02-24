@@ -973,34 +973,17 @@ func postLendingsHandler(c echo.Context) error {
 		dues = append(dues, due)
 		lendingTimes = append(lendingTimes, lendingTime)
 		books = append(books, book)
-	}
 
-	// create values map
-	values := make([]map[string]interface{}, len(req.BookIDs))
-	for i := range values {
-		values[i] = map[string]interface{}{
-			"id":           ids[i],
-			"book_id":      bookIDs[i],
-			"member_id":    memberIDs[i],
-			"due":          dues[i],
-			"lending_time": lendingTimes[i],
+		// insert
+		_, err = tx.ExecContext(c.Request().Context(), "INSERT INTO `lending` (`id`, `book_id`, `member_id`, `due`, `lending_time`) VALUES (?, ?, ?, ?, ?)", id, bookID, req.MemberID, due, lendingTime)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
-	}
-	// bulk insert using ids, bookIDs, memberIDs, dues, lendingTimes
-	// use db.NamedExecContext
-	query, args, err := sqlx.Named("INSERT INTO `lending` (`id`, `book_id`, `member_id`, `due`, `lending_time`) VALUES (:id, :book_id, :member_id, :due, :lending_time)", values)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	// use db.NamedExecContext
-	_, err = tx.NamedExecContext(c.Request().Context(), query, args)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	// Select
 	// use sqlx.In
-	query, args, err = sqlx.In("SELECT * FROM `lending` WHERE `id` IN (?)", ids)
+	query, args, err := sqlx.In("SELECT * FROM `lending` WHERE `id` IN (?)", ids)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
