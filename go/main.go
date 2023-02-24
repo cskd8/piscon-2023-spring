@@ -21,7 +21,6 @@ import (
 
 	_ "net/http/pprof"
 
-	"github.com/felixge/fgprof"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
@@ -31,10 +30,10 @@ import (
 )
 
 func main() {
-	http.DefaultServeMux.Handle("/debug/fgprof", fgprof.Handler())
-	go func() {
-		log.Println(http.ListenAndServe(":6060", nil))
-	}()
+	// http.DefaultServeMux.Handle("/debug/fgprof", fgprof.Handler())
+	// go func() {
+	// 	log.Println(http.ListenAndServe(":6060", nil))
+	// }()
 	host := getEnvOrDefault("DB_HOST", "localhost")
 	port := getEnvOrDefault("DB_PORT", "3306")
 	user := getEnvOrDefault("DB_USER", "isucon")
