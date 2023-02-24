@@ -938,7 +938,7 @@ func postLendingsHandler(c echo.Context) error {
 	due := lendingTime.Add(LendingPeriod * time.Millisecond)
 	res := make([]PostLendingsResponse, len(req.BookIDs))
 
-	var ids []string
+	ids := make([]string, len(req.BookIDs))
 	var books []Book
 	for _, bookID := range req.BookIDs {
 		// 蔵書の存在確認
