@@ -975,7 +975,7 @@ func postLendingsHandler(c echo.Context) error {
 		books = append(books, book)
 
 		// insert
-		_, err = tx.ExecContext(c.Request().Context(), "INSERT INTO `lending` (`id`, `book_id`, `member_id`, `due`, `lending_time`) VALUES (?, ?, ?, ?, ?)", id, bookID, req.MemberID, due, lendingTime)
+		_, err = tx.ExecContext(c.Request().Context(), "INSERT INTO `lending` (`id`, `book_id`, `member_id`, `due`, `created_at`) VALUES (?, ?, ?, ?, ?)", id, bookID, req.MemberID, due, lendingTime)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
