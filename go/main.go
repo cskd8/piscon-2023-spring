@@ -1045,6 +1045,9 @@ func getLendingsHandler(c echo.Context) error {
 		bookIds[i] = lending.BookID
 	}
 
+	if len(memberIds) == 0 {
+		return c.JSON(http.StatusOK, res)
+	}
 	query, args, err = sqlx.In("SELECT * FROM `member` WHERE `id` IN (?)", memberIds)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -1059,6 +1062,9 @@ func getLendingsHandler(c echo.Context) error {
 		memberMap[member.ID] = member
 	}
 
+	if len(bookIds) == 0 {
+		return c.JSON(http.StatusOK, res)
+	}
 	query, args, err = sqlx.In("SELECT * FROM `book` WHERE `id` IN (?)", bookIds)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
