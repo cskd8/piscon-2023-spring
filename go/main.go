@@ -729,17 +729,40 @@ func getBooksHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "no books found")
 	}
 
-	query = strings.ReplaceAll(query, "COUNT(*)", "*")
-	query += "LIMIT ? OFFSET ?"
-	args = append(args, bookPageLimit, (page-1)*bookPageLimit)
-
+	// get lendings in one query
+	queryLendings := "SELECT `lending`.* AS `lending`, `book`.* AS `book` FROM `lending` INNER JOIN `book` ON `lending`.`book_id` = `book`.`id` WHERE `book`.`id` IN ("
+	var argsLendings []any
+	if genre != "" {
+		queryLendings += "genre = ? AND "
+		argsLendings = append(argsLendings, genre)
+	}
+	if title != "" {
+		queryLendings += "title LIKE ? AND "
+		argsLendings = append(argsLendings, "%"+title+"%")
+	}
+	if author != "" {
+		queryLendings += "author LIKE ? AND "
+		argsLendings = append(argsLendings, "%"+author+"%")
+	}
+	queryLendings = strings.TrimSuffix(queryLendings, "AND ")
+	queryLendings += "LIMIT ? OFFSET ?"
+	argsLendings = append(argsLendings, bookPageLimit, (page-1)*bookPageLimit)
+	queryLendings += ")"
+	type LendingBook struct {
+		Lending Lending `db:"lending"`
+		Book    Book    `db:"book"`
+	}
+	var lendingBooks []LendingBook
+	var lendings []Lending
 	var books []Book
-	err = tx.SelectContext(c.Request().Context(), &books, query, args...)
+	err = tx.SelectContext(c.Request().Context(), &lendingBooks, queryLendings, argsLendings...)
 	if err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-	if len(books) == 0 {
-		return echo.NewHTTPError(http.StatusNotFound, "no books to show in this page")
+	for _, lendingBook := range lendingBooks {
+		lendings = append(lendings, lendingBook.Lending)
+		books = append(books, lendingBook.Book)
 	}
 
 	res := GetBooksResponse{
@@ -760,32 +783,7 @@ func getBooksHandler(c echo.Context) error {
 	// 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	// 	}
 	// }
-
-	// fix N+1
-	bookIDs := make([]string, len(books))
-	for i, book := range books {
-		res.Books[i].Book = book
-		bookIDs[i] = book.ID
-	}
-
-	var lendings []Lending
 	lendingMap := make(map[string]bool)
-	// use sql.In
-	query, args, err = sqlx.In("SELECT * FROM `lending` WHERE `book_id` IN (?)", bookIDs)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	query = tx.Rebind(query)
-	err = tx.SelectContext(c.Request().Context(), &lendings, query, args...)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			for i := range res.Books {
-				res.Books[i].Lending = false
-			}
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-	}
 
 	for _, lending := range lendings {
 		lendingMap[lending.BookID] = true
