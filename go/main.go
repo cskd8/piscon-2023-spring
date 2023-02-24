@@ -227,15 +227,7 @@ func generateQRCode(id string) ([]byte, error) {
 		return nil, err
 	}
 	qrCode.DisableBorder = false
-	qrCode.WriteFile(45, qrCodeFileName)
-
-	file, err := os.Open(qrCodeFileName)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	return io.ReadAll(file)
+	return qrCode.PNG(45)
 }
 
 /*
