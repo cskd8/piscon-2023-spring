@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"image/color"
 	"io"
 	"log"
 	"net/http"
@@ -221,14 +222,13 @@ func generateQRCode(id string) ([]byte, error) {
 		 - バージョン5 (37x37ピクセル、マージン含め45x45ピクセル)
 		 - エラー訂正レベルM (15%)
 	*/
-
 	// use go-qrcode
-	qrCode, err := qrcode.New(encryptedID, qrcode.Medium)
+	qrFileLock.Lock()
+	defer qrFileLock.Unlock()
+	err = qrcode.WriteColorFile(encryptedID, qrcode.Medium, -1, color.Black, color.White, qrCodeFileName)
 	if err != nil {
 		return nil, err
 	}
-	qrCode.DisableBorder = false
-	qrCode.WriteFile(45, qrCodeFileName)
 
 	file, err := os.Open(qrCodeFileName)
 	if err != nil {
