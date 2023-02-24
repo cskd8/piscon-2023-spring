@@ -938,7 +938,13 @@ func postLendingsHandler(c echo.Context) error {
 	due := lendingTime.Add(LendingPeriod * time.Millisecond)
 	res := make([]PostLendingsResponse, len(req.BookIDs))
 
-	for i, bookID := range req.BookIDs {
+	var ids []string
+	var bookIDs []string
+	var memberIDs []string
+	var dues []time.Time
+	var lendingTimes []time.Time
+	var books []Book
+	for _, bookID := range req.BookIDs {
 		// 蔵書の存在確認
 		var book Book
 		err = tx.GetContext(c.Request().Context(), &book, "SELECT * FROM `book` WHERE `id` = ?", bookID)
@@ -961,21 +967,44 @@ func postLendingsHandler(c echo.Context) error {
 
 		id := generateID()
 
-		// 貸し出し
-		_, err = tx.ExecContext(c.Request().Context(),
-			"INSERT INTO `lending` (`id`, `book_id`, `member_id`, `due`, `created_at`) VALUES (?, ?, ?, ?, ?)",
-			id, bookID, req.MemberID, due, lendingTime)
+		ids = append(ids, id)
+		bookIDs = append(bookIDs, bookID)
+		memberIDs = append(memberIDs, req.MemberID)
+		dues = append(dues, due)
+		lendingTimes = append(lendingTimes, lendingTime)
+		books = append(books, book)
+	}
+
+	// Insert
+	_, err = tx.ExecContext(c.Request().Context(),
+		"INSERT INTO `lending` (`id`, `book_id`, `member_id`, `due`, `created_at`) VALUES (?, ?, ?, ?, ?)",
+		ids, bookIDs, memberIDs, dues, lendingTimes)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	// Select
+	rows, err := tx.QueryxContext(c.Request().Context(),
+		"SELECT * FROM `lending` WHERE `id` IN (?)", ids)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	for i := 0; rows.Next(); i++ {
+		var lending Lending
+		err = rows.StructScan(&lending)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 
-		err := tx.GetContext(c.Request().Context(), &res[i], "SELECT * FROM `lending` WHERE `id` = ?", id)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		res[i] = PostLendingsResponse{
+			Lending:    lending,
+			MemberName: member.Name,
+			BookTitle:  books[i].Title,
 		}
-
-		res[i].MemberName = member.Name
-		res[i].BookTitle = book.Title
 	}
 
 	_ = tx.Commit()
