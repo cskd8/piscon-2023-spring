@@ -740,17 +740,41 @@ func getBooksHandler(c echo.Context) error {
 		Total: total,
 	}
 
+	// this is N+1
+	// for i, book := range books {
+	// 	res.Books[i].Book = book
+
+	// 	err = tx.GetContext(c.Request().Context(), &Lending{}, "SELECT * FROM `lending` WHERE `book_id` = ?", book.ID)
+	// 	if err == nil {
+	// 		res.Books[i].Lending = true
+	// 	} else if errors.Is(err, sql.ErrNoRows) {
+	// 		res.Books[i].Lending = false
+	// 	} else {
+	// 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	// 	}
+	// }
+
+	// fix N+1
+	bookIDs := make([]string, len(books))
 	for i, book := range books {
 		res.Books[i].Book = book
+		bookIDs[i] = book.ID
+	}
 
-		err = tx.GetContext(c.Request().Context(), &Lending{}, "SELECT * FROM `lending` WHERE `book_id` = ?", book.ID)
-		if err == nil {
-			res.Books[i].Lending = true
-		} else if errors.Is(err, sql.ErrNoRows) {
-			res.Books[i].Lending = false
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
+	var lendings []Lending
+	err = tx.SelectContext(c.Request().Context(), &lendings, "SELECT * FROM `lending` WHERE `book_id` IN (?)", bookIDs)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	lendingMap := make(map[string]bool)
+	for _, lending := range lendings {
+		lendingMap[lending.BookID] = true
+	}
+
+	for i := range res.Books {
+		_, ok := lendingMap[res.Books[i].ID]
+		res.Books[i].Lending = ok
 	}
 
 	_ = tx.Commit()
