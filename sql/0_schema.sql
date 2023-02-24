@@ -8,6 +8,8 @@ CREATE TABLE `book` (
   `created_at` datetime(6) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+-- Add multi index to genre, title, author with id
+ALTER TABLE `book` ADD INDEX `idx_genre_title_author` (`genre`, `title`, `author`, `id`);
 
 DROP TABLE IF EXISTS `key`;
 
@@ -28,7 +30,7 @@ CREATE TABLE `lending` (
   PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 -- Add multi index to book_id with id
-ALTER TABLE `lending` ADD INDEX `book_id` (`book_id`, `id`);
+ALTER TABLE `lending` ADD INDEX `idx_bookid_id` (`book_id`, `id`);
 
 DROP TABLE IF EXISTS `member`;
 
