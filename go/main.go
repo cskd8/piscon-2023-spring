@@ -24,14 +24,11 @@ import (
 	"github.com/felixge/fgprof"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/oklog/ulid/v2"
 	"github.com/skip2/go-qrcode"
 )
-
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 func main() {
 	http.DefaultServeMux.Handle("/debug/fgprof", fgprof.Handler())
@@ -803,9 +800,7 @@ func getBooksHandler(c echo.Context) error {
 
 	_ = tx.Commit()
 
-	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSONCharsetUTF8)
-	c.Response().WriteHeader(http.StatusOK)
-	return json.NewEncoder(c.Response()).Encode(res)
+	return c.JSON(http.StatusOK, res)
 }
 
 type GetBookResponse struct {
@@ -864,9 +859,7 @@ func getBookHandler(c echo.Context) error {
 
 	_ = tx.Commit()
 
-	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSONCharsetUTF8)
-	c.Response().WriteHeader(http.StatusOK)
-	return json.NewEncoder(c.Response()).Encode(res)
+	return c.JSON(http.StatusOK, res)
 }
 
 // 蔵書のQRコードを取得
@@ -1058,9 +1051,7 @@ func getLendingsHandler(c echo.Context) error {
 	}
 
 	if len(memberIds) == 0 {
-		c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSONCharsetUTF8)
-		c.Response().WriteHeader(http.StatusOK)
-		return json.NewEncoder(c.Response()).Encode(res)
+		return c.JSON(http.StatusOK, res)
 	}
 	query, args, err = sqlx.In("SELECT * FROM `member` WHERE `id` IN (?)", memberIds)
 	if err != nil {
@@ -1077,9 +1068,7 @@ func getLendingsHandler(c echo.Context) error {
 	}
 
 	if len(bookIds) == 0 {
-		c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSONCharsetUTF8)
-		c.Response().WriteHeader(http.StatusOK)
-		return json.NewEncoder(c.Response()).Encode(res)
+		return c.JSON(http.StatusOK, res)
 	}
 	query, args, err = sqlx.In("SELECT * FROM `book` WHERE `id` IN (?)", bookIds)
 	if err != nil {
@@ -1103,9 +1092,7 @@ func getLendingsHandler(c echo.Context) error {
 
 	_ = tx.Commit()
 
-	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSONCharsetUTF8)
-	c.Response().WriteHeader(http.StatusOK)
-	return json.NewEncoder(c.Response()).Encode(res)
+	return c.JSON(http.StatusOK, res)
 }
 
 type ReturnLendingsRequest struct {
