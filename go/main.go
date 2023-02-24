@@ -951,9 +951,8 @@ func postLendingsHandler(c echo.Context) error {
 
 	for i, bookID := range req.BookIDs {
 		// 蔵書の存在確認
-		// use only one field
 		var book Book
-		err = tx.GetContext(c.Request().Context(), &book, "SELECT `id`, `title` FROM `book` WHERE `id` = ?", bookID)
+		err = tx.GetContext(c.Request().Context(), &book, "SELECT * FROM `book` WHERE `id` = ?", bookID)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				return echo.NewHTTPError(http.StatusNotFound, err.Error())
@@ -963,9 +962,8 @@ func postLendingsHandler(c echo.Context) error {
 		}
 
 		// 貸し出し中かどうか確認
-		// use only one field
 		var lending Lending
-		err = tx.GetContext(c.Request().Context(), &lending, "SELECT `book_id` FROM `lending` WHERE `book_id` = ?", bookID)
+		err = tx.GetContext(c.Request().Context(), &lending, "SELECT * FROM `lending` WHERE `book_id` = ?", bookID)
 		if err == nil {
 			return echo.NewHTTPError(http.StatusConflict, "this book is already lent")
 		} else if !errors.Is(err, sql.ErrNoRows) {
