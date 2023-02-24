@@ -953,7 +953,7 @@ func postLendingsHandler(c echo.Context) error {
 		// 蔵書の存在確認
 		// use only one field
 		var book Book
-		err = tx.GetContext(c.Request().Context(), &book, "SELECT `id` FROM `book` WHERE `id` = ?", bookID)
+		err = tx.GetContext(c.Request().Context(), &book, "SELECT `id`, `title` FROM `book` WHERE `id` = ?", bookID)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				return echo.NewHTTPError(http.StatusNotFound, err.Error())
