@@ -50,3 +50,5 @@ CREATE TABLE `member` (
   PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 ALTER TABLE `member` ADD INDEX `idx_banned_id` (`banned`, `id`);
+ALTER TABLE `member` ADD INDEX `idx_banned` (`banned`);
+ALTER TABLE `member` ADD INDEX `idx_banned_name_id` (`banned`, `name`, `id`);
