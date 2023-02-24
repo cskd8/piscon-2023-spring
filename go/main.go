@@ -968,37 +968,18 @@ func postLendingsHandler(c echo.Context) error {
 		id := generateID()
 
 		ids = append(ids, id)
-		bookIDs = append(bookIDs, bookID)
-		memberIDs = append(memberIDs, req.MemberID)
-		dues = append(dues, due)
-		lendingTimes = append(lendingTimes, lendingTime)
 		books = append(books, book)
-	}
 
-	// Insert
-	// use sqlx.Named
-	if len(ids) == 0 {
-		return echo.NewHTTPError(http.StatusInternalServerError, "ids is empty")
-	}
-	query, args, err := sqlx.Named("INSERT INTO `lending` (`id`, `book_id`, `member_id`, `due`, `created_at`) VALUES (:id, :book_id, :member_id, :due, :created_at)", map[string]interface{}{
-		"id":         ids,
-		"book_id":    bookIDs,
-		"member_id":  memberIDs,
-		"due":        dues,
-		"created_at": lendingTimes,
-	})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	// use sqlx.NamedExecContext
-	_, err = tx.NamedExecContext(c.Request().Context(), query, args)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		// insert
+		_, err = tx.ExecContext(c.Request().Context(), "INSERT INTO `lending` (`id`, `book_id`, `member_id`, `due`, `created_at`) VALUES (?, ?, ?, ?, ?)", id, bookID, req.MemberID, due, lendingTime)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
 	}
 
 	// Select
 	// use sqlx.In
-	query, args, err = sqlx.In("SELECT * FROM `lending` WHERE `id` IN (?)", ids)
+	query, args, err := sqlx.In("SELECT * FROM `lending` WHERE `id` IN (?)", ids)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
