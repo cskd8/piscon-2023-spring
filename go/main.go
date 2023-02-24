@@ -975,16 +975,21 @@ func postLendingsHandler(c echo.Context) error {
 		books = append(books, book)
 	}
 
+	// create values map
+	values := make([]map[string]interface{}, len(req.BookIDs))
+	for i := range values {
+		values[i] = map[string]interface{}{
+			"id":           ids[i],
+			"book_id":      bookIDs[i],
+			"member_id":    memberIDs[i],
+			"due":          dues[i],
+			"lending_time": lendingTimes[i],
+		}
+	}
 	// bulk insert using ids, bookIDs, memberIDs, dues, lendingTimes
 	_, err = tx.NamedExecContext(c.Request().Context(),
 		"INSERT INTO `lending` (`id`, `book_id`, `member_id`, `due`, `lending_time`) VALUES (:id, :book_id, :member_id, :due, :lending_time)",
-		map[string]interface{}{
-			"id":           ids,
-			"book_id":      bookIDs,
-			"member_id":    memberIDs,
-			"due":          dues,
-			"lending_time": lendingTimes,
-		})
+		values)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
