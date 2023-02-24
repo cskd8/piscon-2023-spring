@@ -730,8 +730,9 @@ func getBooksHandler(c echo.Context) error {
 	}
 
 	query = strings.ReplaceAll(query, "COUNT(*)", "*")
-	query += "LIMIT ? OFFSET ?"
-	args = append(args, bookPageLimit, (page-1)*bookPageLimit)
+	// use `BETWEEN` instead of `LIMIT` and `OFFSET
+	query += " BETWEEN ? AND ?"
+	args = append(args, (page-1)*bookPageLimit, page*bookPageLimit)
 
 	var books []Book
 	err = tx.SelectContext(c.Request().Context(), &books, query, args...)
