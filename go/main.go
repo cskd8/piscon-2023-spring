@@ -18,13 +18,14 @@ import (
 	"sync"
 	"time"
 
+	_ "net/http/pprof"
+
+	"github.com/felixge/fgprof"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/oklog/ulid/v2"
-	_ "net/http/pprof"
-	"github.com/felixge/fgprof"
 )
 
 func main() {
@@ -723,14 +724,23 @@ func getBooksHandler(c echo.Context) error {
 		res.Books[i].Book = book
 		bookIDs[i] = book.ID
 	}
-	lendings := make(map[string]Lending)
-	err = tx.SelectContext(c.Request().Context(), &lendings, "SELECT * FROM `lending` WHERE `book_id` IN (?)", bookIDs)
-	if err != nil {
+	lendings := make(map[string]string)
+	err = tx.SelectContext(c.Request().Context(), &lendings, "SELECT `book_id` FROM `lending` WHERE `book_id` IN (?)", bookIDs)
+	if err == nil {
+		for _, book := range res.Books {
+			_, ok := lendings[book.ID]
+			if ok {
+				book.Lending = true
+			} else {
+				book.Lending = false
+			}
+		}
+	} else if errors.Is(err, sql.ErrNoRows) {
+		for _, book := range res.Books {
+			book.Lending = false
+		}
+	} else {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	for i, book := range books {
-		_, ok := lendings[book.ID]
-		res.Books[i].Lending = ok
 	}
 
 	_ = tx.Commit()
