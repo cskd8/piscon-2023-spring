@@ -803,11 +803,9 @@ func getBooksHandler(c echo.Context) error {
 
 	_ = tx.Commit()
 
-	resStr, err := json.MarshalToString(res)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	return c.String(http.StatusOK, resStr)
+	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSONCharsetUTF8)
+	c.Response().WriteHeader(http.StatusOK)
+	return json.NewEncoder(c.Response()).Encode(res)
 }
 
 type GetBookResponse struct {
@@ -866,11 +864,9 @@ func getBookHandler(c echo.Context) error {
 
 	_ = tx.Commit()
 
-	resStr, err := json.MarshalToString(res)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	return c.String(http.StatusOK, resStr)
+	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSONCharsetUTF8)
+	c.Response().WriteHeader(http.StatusOK)
+	return json.NewEncoder(c.Response()).Encode(res)
 }
 
 // 蔵書のQRコードを取得
@@ -1062,11 +1058,9 @@ func getLendingsHandler(c echo.Context) error {
 	}
 
 	if len(memberIds) == 0 {
-		resStr, err := json.MarshalToString(res)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-		return c.String(http.StatusOK, resStr)
+		c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSONCharsetUTF8)
+		c.Response().WriteHeader(http.StatusOK)
+		return json.NewEncoder(c.Response()).Encode(res)
 	}
 	query, args, err = sqlx.In("SELECT * FROM `member` WHERE `id` IN (?)", memberIds)
 	if err != nil {
@@ -1083,11 +1077,9 @@ func getLendingsHandler(c echo.Context) error {
 	}
 
 	if len(bookIds) == 0 {
-		resStr, err := json.MarshalToString(res)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-		return c.String(http.StatusOK, resStr)
+		c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSONCharsetUTF8)
+		c.Response().WriteHeader(http.StatusOK)
+		return json.NewEncoder(c.Response()).Encode(res)
 	}
 	query, args, err = sqlx.In("SELECT * FROM `book` WHERE `id` IN (?)", bookIds)
 	if err != nil {
@@ -1111,11 +1103,9 @@ func getLendingsHandler(c echo.Context) error {
 
 	_ = tx.Commit()
 
-	resStr, err := json.MarshalToString(res)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	return c.String(http.StatusOK, resStr)
+	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSONCharsetUTF8)
+	c.Response().WriteHeader(http.StatusOK)
+	return json.NewEncoder(c.Response()).Encode(res)
 }
 
 type ReturnLendingsRequest struct {
