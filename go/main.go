@@ -693,7 +693,7 @@ func getBooksHandler(c echo.Context) error {
 
 	// 前ページの最後の蔵書ID
 	// シーク法をフロントエンドでは実装したが、バックエンドは力尽きた
-	_ = c.QueryParam("last_book_id")
+	lastBookID := c.QueryParam("last_book_id")
 
 	tx, err := db.BeginTxx(c.Request().Context(), nil)
 	if err != nil {
@@ -730,8 +730,8 @@ func getBooksHandler(c echo.Context) error {
 	}
 
 	query = strings.ReplaceAll(query, "COUNT(*)", "*")
-	query += "LIMIT ? OFFSET ?"
-	args = append(args, bookPageLimit, (page-1)*bookPageLimit)
+	query += "WHERE ID > ? ORDER BY ID ASC LIMIT ? OFFSET ?"
+	args = append(args, lastBookID, bookPageLimit, (page-1)*bookPageLimit)
 
 	var books []Book
 	err = tx.SelectContext(c.Request().Context(), &books, query, args...)
