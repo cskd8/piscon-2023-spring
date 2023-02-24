@@ -226,7 +226,7 @@ func generateQRCode(id string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	qrCode.DisableBorder = true
+	qrCode.DisableBorder = false
 	qrCode.WriteFile(45, qrCodeFileName)
 
 	file, err := os.Open(qrCodeFileName)
