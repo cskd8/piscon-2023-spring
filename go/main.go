@@ -1001,27 +1001,20 @@ func postLendingsHandler(c echo.Context) error {
 	}
 
 	// Select
-	rows, err := tx.QueryxContext(c.Request().Context(),
-		"SELECT * FROM `lending` WHERE `id` IN (?)", ids)
+	// use sqlx.In
+	query, args, err := sqlx.In("SELECT * FROM `lending` WHERE `id` IN (?)", ids)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-	defer func() {
-		_ = rows.Close()
-	}()
+	// use sqlx.SelectContext
+	err = tx.SelectContext(c.Request().Context(), &res, query, args...)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 
-	for i := 0; rows.Next(); i++ {
-		var lending Lending
-		err = rows.StructScan(&lending)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-
-		res[i] = PostLendingsResponse{
-			Lending:    lending,
-			MemberName: member.Name,
-			BookTitle:  books[i].Title,
-		}
+	for i := range res {
+		res[i].MemberName = member.Name
+		res[i].BookTitle = books[i].Title
 	}
 
 	_ = tx.Commit()
