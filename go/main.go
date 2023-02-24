@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -288,6 +289,27 @@ type PostMemberRequest struct {
 	PhoneNumber string `json:"phone_number"`
 }
 
+var countMap = &sync.Map{}
+
+// Create Cache for Member count
+func memberCacheInit() error {
+	var count int
+	err := db.GetContext(context.Background(), &count, "SELECT COUNT(*) FROM `member`")
+	if err != nil {
+		return err
+	}
+	countMap.Store("member", count)
+	return nil
+}
+
+func getMemberCount() (int, error) {
+	count, ok := countMap.Load("member")
+	if !ok {
+		return 0, errors.New("member count not found")
+	}
+	return count.(int), nil
+}
+
 // 会員登録
 func postMemberHandler(c echo.Context) error {
 	var req PostMemberRequest
@@ -322,6 +344,12 @@ func postMemberHandler(c echo.Context) error {
 	}
 
 	_ = tx.Commit()
+
+	// Update Cache
+	err = memberCacheInit()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 
 	return c.JSON(http.StatusCreated, res)
 }
@@ -379,8 +407,8 @@ func getMembersHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "no members to show in this page")
 	}
 
-	var total int
-	err = tx.GetContext(c.Request().Context(), &total, "SELECT COUNT(*) FROM `member`")
+	// get member count from cache
+	total, err := getMemberCount()
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
