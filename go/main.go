@@ -937,9 +937,7 @@ func postLendingsHandler(c echo.Context) error {
 	due := lendingTime.Add(LendingPeriod * time.Millisecond)
 	res := make([]PostLendingsResponse, len(req.BookIDs))
 
-	ids := make([]string, len(req.BookIDs))
-	var books []Book
-	for _, bookID := range req.BookIDs {
+	for i, bookID := range req.BookIDs {
 		// 蔵書の存在確認
 		var book Book
 		err = tx.GetContext(c.Request().Context(), &book, "SELECT * FROM `book` WHERE `id` = ?", bookID)
@@ -962,31 +960,21 @@ func postLendingsHandler(c echo.Context) error {
 
 		id := generateID()
 
-		ids = append(ids, id)
-		books = append(books, book)
-
-		// insert
-		_, err = tx.ExecContext(c.Request().Context(), "INSERT INTO `lending` (`id`, `book_id`, `member_id`, `due`, `created_at`) VALUES (?, ?, ?, ?, ?)", id, bookID, req.MemberID, due, lendingTime)
+		// 貸し出し
+		_, err = tx.ExecContext(c.Request().Context(),
+			"INSERT INTO `lending` (`id`, `book_id`, `member_id`, `due`, `created_at`) VALUES (?, ?, ?, ?, ?)",
+			id, bookID, req.MemberID, due, lendingTime)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
-	}
 
-	// Select
-	// use sqlx.In
-	query, args, err := sqlx.In("SELECT * FROM `lending` WHERE `id` IN (?)", ids)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	// use sqlx.SelectContext
-	err = tx.SelectContext(c.Request().Context(), &res, query, args...)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
+		err := tx.GetContext(c.Request().Context(), &res[i], "SELECT * FROM `lending` WHERE `id` = ?", id)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
 
-	for i := range res {
 		res[i].MemberName = member.Name
-		res[i].BookTitle = books[i].Title
+		res[i].BookTitle = book.Title
 	}
 
 	_ = tx.Commit()
