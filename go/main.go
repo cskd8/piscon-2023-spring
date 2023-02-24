@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -21,14 +22,13 @@ import (
 
 	_ "net/http/pprof"
 
-	"github.com/disintegration/imaging"
 	"github.com/felixge/fgprof"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	"github.com/ksrnnb/qrcode"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/oklog/ulid/v2"
-	"github.com/skip2/go-qrcode"
 )
 
 func main() {
@@ -222,20 +222,23 @@ func generateQRCode(id string) ([]byte, error) {
 		 - バージョン5 (37x37ピクセル、マージン含め45x45ピクセル)
 		 - エラー訂正レベルM (15%)
 	*/
-	// use go-qrcode
-	qrCode, err := qrcode.New(encryptedID, qrcode.Medium)
+	// 仕様を満たすQRコードを生成
+	// use qrcode.New()
+	q, err := qrcode.New(qrcode.ECL_Medium, encryptedID)
 	if err != nil {
 		return nil, err
 	}
-	qrCode.DisableBorder = true
-	qrCode.WriteFile(37, qrCodeFileName)
-	// resize with margin 8px
-	img, err := imaging.Open(qrCodeFileName)
+
+	size := 45
+	p, err := q.PNG(size)
 	if err != nil {
 		return nil, err
 	}
-	img = imaging.Resize(img, 45, 45, imaging.Lanczos)
-	err = imaging.Save(img, qrCodeFileName)
+
+	// 生成したQRコードをファイルに保存
+	qrFileLock.Lock()
+	defer qrFileLock.Unlock()
+	err = ioutil.WriteFile(qrCodeFileName, p, 0644)
 	if err != nil {
 		return nil, err
 	}
